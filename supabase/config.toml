@@ -1,1 +1,16 @@
 project_id = "skiwjjsrbfpldeizvufl"
+
+[functions.ai-forecast]
+verify_jwt = false
+
+[functions.portfolio-optimizer]
+verify_jwt = false
+
+[functions.stock-data]
+verify_jwt = false
+
+[functions.news-sentiment]
+verify_jwt = false
+
+[functions.portfolio-analysis]
+verify_jwt = false
