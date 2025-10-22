@@ -5,12 +5,30 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const NSE_BASE_URL = 'https://www.nseindia.com';
+
 const NSE_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-  'Accept': 'application/json',
+  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+  'Accept': '*/*',
   'Accept-Language': 'en-US,en;q=0.9',
   'Accept-Encoding': 'gzip, deflate, br',
+  'Connection': 'keep-alive',
+  'Referer': 'https://www.nseindia.com/',
 };
+
+// Function to get cookies from NSE
+async function getNSECookies(): Promise<string> {
+  try {
+    const response = await fetch(NSE_BASE_URL, {
+      headers: NSE_HEADERS,
+    });
+    const setCookie = response.headers.get('set-cookie');
+    return setCookie || '';
+  } catch (error) {
+    console.error('Error getting NSE cookies:', error);
+    return '';
+  }
+}
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,21 +39,40 @@ serve(async (req) => {
     const { type } = await req.json();
     console.log(`Fetching NSE market data, type: ${type}`);
 
+    // Get cookies first
+    const cookies = await getNSECookies();
+    const headersWithCookies = {
+      ...NSE_HEADERS,
+      'Cookie': cookies,
+    };
+
     let data;
 
     if (type === 'overview') {
       // Fetch NIFTY 50 index data
       const niftyResponse = await fetch(
         'https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%2050',
-        { headers: NSE_HEADERS }
+        { headers: headersWithCookies }
       );
+      
+      if (!niftyResponse.ok) {
+        console.error('NIFTY response not ok:', niftyResponse.status);
+        throw new Error(`NSE API returned ${niftyResponse.status}`);
+      }
+      
       const niftyData = await niftyResponse.json();
 
       // Fetch BANK NIFTY
       const bankNiftyResponse = await fetch(
         'https://www.nseindia.com/api/equity-stockIndices?index=NIFTY%20BANK',
-        { headers: NSE_HEADERS }
+        { headers: headersWithCookies }
       );
+      
+      if (!bankNiftyResponse.ok) {
+        console.error('BANK NIFTY response not ok:', bankNiftyResponse.status);
+        throw new Error(`NSE API returned ${bankNiftyResponse.status}`);
+      }
+      
       const bankNiftyData = await bankNiftyResponse.json();
 
       data = {
@@ -57,23 +94,41 @@ serve(async (req) => {
     } else if (type === 'gainers') {
       const response = await fetch(
         'https://www.nseindia.com/api/live-analysis-variations?index=gainers',
-        { headers: NSE_HEADERS }
+        { headers: headersWithCookies }
       );
+      
+      if (!response.ok) {
+        console.error('Gainers response not ok:', response.status);
+        throw new Error(`NSE API returned ${response.status}`);
+      }
+      
       const result = await response.json();
       data = { stocks: result.data?.slice(0, 10) || [] };
     } else if (type === 'losers') {
       const response = await fetch(
         'https://www.nseindia.com/api/live-analysis-variations?index=losers',
-        { headers: NSE_HEADERS }
+        { headers: headersWithCookies }
       );
+      
+      if (!response.ok) {
+        console.error('Losers response not ok:', response.status);
+        throw new Error(`NSE API returned ${response.status}`);
+      }
+      
       const result = await response.json();
       data = { stocks: result.data?.slice(0, 10) || [] };
     } else if (type === 'market-summary') {
       // Fetch market summary stats
       const response = await fetch(
         'https://www.nseindia.com/api/market-data-pre-open?key=ALL',
-        { headers: NSE_HEADERS }
+        { headers: headersWithCookies }
       );
+      
+      if (!response.ok) {
+        console.error('Market summary response not ok:', response.status);
+        throw new Error(`NSE API returned ${response.status}`);
+      }
+      
       const result = await response.json();
       
       data = {
