@@ -6,6 +6,18 @@ verify_jwt = false
 [functions.portfolio-optimizer]
 verify_jwt = false
 
+[functions.nse-market-data]
+verify_jwt = false
+
+[functions.nse-stock-search]
+verify_jwt = false
+
+[functions.nse-stock-detail]
+verify_jwt = false
+
+[functions.nse-news]
+verify_jwt = false
+
 [functions.stock-data]
 verify_jwt = false
 

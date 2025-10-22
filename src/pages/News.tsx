@@ -18,6 +18,7 @@ interface NewsArticle {
     score: number;
     recommendation: string;
     confidence: number;
+    analysis: string;
   };
 }
 
@@ -32,7 +33,7 @@ export default function News() {
 
   const fetchNews = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('news-sentiment', {
+      const { data, error } = await supabase.functions.invoke('nse-news', {
         body: {}
       });
 
@@ -134,56 +135,71 @@ export default function News() {
         ) : (
           filteredArticles.map((article) => (
             <Card key={article.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex justify-between items-start gap-4">
-                  <div className="flex-1">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* News Content - Left Side */}
+                <div className="lg:col-span-2">
+                  <CardHeader>
                     <CardTitle className="text-xl mb-2">{article.title}</CardTitle>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <span>{article.source}</span>
                       <span>•</span>
                       <span>{new Date(article.publishedAt).toLocaleDateString()}</span>
                     </div>
-                  </div>
-                  {article.image && (
-                    <img 
-                      src={article.image} 
-                      alt={article.title}
-                      className="w-24 h-24 object-cover rounded-md"
-                    />
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground mb-4">{article.summary}</p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Badge className={getSentimentColor(article.sentiment.sentiment)}>
-                      {article.sentiment.sentiment}
-                    </Badge>
-                    <Badge 
-                      variant="outline"
-                      className="gap-1"
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">{article.summary}</p>
+                    <a
+                      href={article.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline flex items-center gap-1 text-sm"
                     >
-                      {getSentimentIcon(article.sentiment.recommendation)}
-                      {article.sentiment.recommendation}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">
-                      Confidence: {(article.sentiment.confidence * 100).toFixed(0)}%
-                    </span>
-                  </div>
-                  
-                  <a
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline flex items-center gap-1 text-sm"
-                  >
-                    Read more
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
+                      Read full article
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  </CardContent>
                 </div>
-              </CardContent>
+
+                {/* AI Analysis - Right Side */}
+                <div className="border-l pl-6">
+                  <CardHeader>
+                    <CardTitle className="text-sm text-muted-foreground">AI Sentiment Analysis</CardTitle>
+                    <p className="text-xs text-muted-foreground mt-1">Powered by FinBERT</p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Sentiment</div>
+                      <Badge className={getSentimentColor(article.sentiment.sentiment)}>
+                        {article.sentiment.sentiment}
+                      </Badge>
+                    </div>
+                    
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Recommendation</div>
+                      <Badge 
+                        variant="outline"
+                        className="gap-1"
+                      >
+                        {getSentimentIcon(article.sentiment.recommendation)}
+                        {article.sentiment.recommendation}
+                      </Badge>
+                    </div>
+
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Analysis</div>
+                      <p className="text-sm bg-muted p-3 rounded-md italic">
+                        {article.sentiment.analysis}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        Confidence: {(article.sentiment.confidence * 100).toFixed(0)}%
+                      </p>
+                    </div>
+                  </CardContent>
+                </div>
+              </div>
             </Card>
           ))
         )}

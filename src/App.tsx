@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import Market from "./pages/Market";
 import Stocks from "./pages/Stocks";
+import StockDetail from "./pages/StockDetail";
 import News from "./pages/News";
 import Watchlist from "./pages/Watchlist";
 import Portfolio from "./pages/Portfolio";
@@ -23,6 +24,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Market />} />
           <Route path="/stocks" element={<Stocks />} />
+          <Route path="/stocks/:symbol" element={<StockDetail />} />
           <Route path="/news" element={<News />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/portfolio" element={<Portfolio />} />
