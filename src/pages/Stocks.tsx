@@ -26,7 +26,7 @@ export default function Stocks() {
   const fetchStocks = async (query = "") => {
     try {
       setLoading(true);
-      const { data, error } = await supabase.functions.invoke('nse-stock-search', {
+      const { data, error } = await supabase.functions.invoke('stock-search', {
         body: { query }
       });
 
@@ -60,9 +60,9 @@ export default function Stocks() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">NSE Stocks</h1>
+        <h1 className="text-4xl font-bold mb-2">Stocks</h1>
         <p className="text-muted-foreground">
-          Search and explore Indian stocks
+          Search and explore international stocks
         </p>
       </div>
 
@@ -109,7 +109,7 @@ export default function Stocks() {
                 {stock.price > 0 && (
                   <>
                     <div className="text-2xl font-bold mb-1">
-                      ₹{stock.price.toFixed(2)}
+                      ${stock.price.toFixed(2)}
                     </div>
                     <div className={`text-sm ${
                       stock.change >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'

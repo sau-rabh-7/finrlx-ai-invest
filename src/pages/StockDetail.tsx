@@ -14,12 +14,11 @@ interface StockDetail {
   change: number;
   changePercent: number;
   open: number;
-  high: number;
-  low: number;
+  dayHigh: number;
+  dayLow: number;
   previousClose: number;
   volume: number;
   marketCap: number;
-  pe: number;
   week52High: number;
   week52Low: number;
   aiAnalysis: {
@@ -44,7 +43,7 @@ export default function StockDetail() {
 
   const fetchStockDetail = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('nse-stock-detail', {
+      const { data, error } = await supabase.functions.invoke('stock-detail', {
         body: { symbol }
       });
 
@@ -104,7 +103,7 @@ export default function StockDetail() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-bold">
-                    ₹{stock.currentPrice.toFixed(2)}
+                    ${stock.currentPrice.toFixed(2)}
                   </div>
                   <div className={`flex items-center justify-end text-sm mt-1 ${
                     isPositive ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'
@@ -123,35 +122,35 @@ export default function StockDetail() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>
                   <div className="text-sm text-muted-foreground">Open</div>
-                  <div className="text-lg font-semibold">₹{stock.open.toFixed(2)}</div>
+                  <div className="text-lg font-semibold">${stock.open.toFixed(2)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">High</div>
-                  <div className="text-lg font-semibold">₹{stock.high.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">Day High</div>
+                  <div className="text-lg font-semibold">${stock.dayHigh.toFixed(2)}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">Low</div>
-                  <div className="text-lg font-semibold">₹{stock.low.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">Day Low</div>
+                  <div className="text-lg font-semibold">${stock.dayLow.toFixed(2)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Prev Close</div>
-                  <div className="text-lg font-semibold">₹{stock.previousClose.toFixed(2)}</div>
+                  <div className="text-lg font-semibold">${stock.previousClose.toFixed(2)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">Volume</div>
                   <div className="text-lg font-semibold">{stock.volume.toLocaleString('en-IN')}</div>
                 </div>
                 <div>
-                  <div className="text-sm text-muted-foreground">P/E Ratio</div>
-                  <div className="text-lg font-semibold">{stock.pe.toFixed(2)}</div>
+                  <div className="text-sm text-muted-foreground">Market Cap</div>
+                  <div className="text-lg font-semibold">${(stock.marketCap / 1000000000).toFixed(2)}B</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">52W High</div>
-                  <div className="text-lg font-semibold">₹{stock.week52High.toFixed(2)}</div>
+                  <div className="text-lg font-semibold">${stock.week52High.toFixed(2)}</div>
                 </div>
                 <div>
                   <div className="text-sm text-muted-foreground">52W Low</div>
-                  <div className="text-lg font-semibold">₹{stock.week52Low.toFixed(2)}</div>
+                  <div className="text-lg font-semibold">${stock.week52Low.toFixed(2)}</div>
                 </div>
               </div>
             </CardContent>

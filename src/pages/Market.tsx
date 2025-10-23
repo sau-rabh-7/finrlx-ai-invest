@@ -41,7 +41,7 @@ export default function Market() {
   const fetchMarketData = async () => {
     try {
       // Fetch market overview
-      const { data: overviewData } = await supabase.functions.invoke('nse-market-data', {
+      const { data: overviewData } = await supabase.functions.invoke('market-data', {
         body: { type: 'overview' }
       });
       if (overviewData?.indices) {
@@ -49,7 +49,7 @@ export default function Market() {
       }
 
       // Fetch top gainers
-      const { data: gainersData } = await supabase.functions.invoke('nse-market-data', {
+      const { data: gainersData } = await supabase.functions.invoke('market-data', {
         body: { type: 'gainers' }
       });
       if (gainersData?.stocks) {
@@ -57,7 +57,7 @@ export default function Market() {
       }
 
       // Fetch top losers
-      const { data: losersData } = await supabase.functions.invoke('nse-market-data', {
+      const { data: losersData } = await supabase.functions.invoke('market-data', {
         body: { type: 'losers' }
       });
       if (losersData?.stocks) {
@@ -65,7 +65,7 @@ export default function Market() {
       }
 
       // Fetch market summary
-      const { data: summaryData } = await supabase.functions.invoke('nse-market-data', {
+      const { data: summaryData } = await supabase.functions.invoke('market-data', {
         body: { type: 'market-summary' }
       });
       if (summaryData) {
@@ -82,7 +82,7 @@ export default function Market() {
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">Market Overview</h1>
-        <p className="text-muted-foreground">Real-time NSE market data and performance</p>
+        <p className="text-muted-foreground">Real-time market data and performance</p>
       </div>
 
       {/* Market Indices */}
@@ -145,7 +145,7 @@ export default function Market() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                ₹{(summary.totalTurnover / 10000000).toFixed(2)}Cr
+                ${(summary.totalTurnover / 1000000000).toFixed(2)}B
               </div>
             </CardContent>
           </Card>
@@ -210,7 +210,7 @@ export default function Market() {
                     <TableRow key={stock.symbol}>
                       <TableCell className="font-medium">{stock.symbol}</TableCell>
                       <TableCell className="text-right">
-                        ₹{stock.lastPrice.toFixed(2)}
+                        ${stock.lastPrice.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right text-[hsl(var(--bullish))]">
                         +{stock.pChange.toFixed(2)}%
@@ -251,7 +251,7 @@ export default function Market() {
                     <TableRow key={stock.symbol}>
                       <TableCell className="font-medium">{stock.symbol}</TableCell>
                       <TableCell className="text-right">
-                        ₹{stock.lastPrice.toFixed(2)}
+                        ${stock.lastPrice.toFixed(2)}
                       </TableCell>
                       <TableCell className="text-right text-[hsl(var(--bearish))]">
                         {stock.pChange.toFixed(2)}%

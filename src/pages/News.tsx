@@ -33,7 +33,7 @@ export default function News() {
 
   const fetchNews = async () => {
     try {
-      const { data, error } = await supabase.functions.invoke('nse-news', {
+      const { data, error } = await supabase.functions.invoke('news', {
         body: {}
       });
 
@@ -50,7 +50,7 @@ export default function News() {
 
   const filteredArticles = articles.filter(article => {
     if (filter === "all") return true;
-    return article.sentiment.recommendation === filter;
+    return article.sentiment.recommendation.toLowerCase() === filter.toLowerCase();
   });
 
   const getSentimentColor = (sentiment: string) => {
@@ -65,7 +65,7 @@ export default function News() {
   };
 
   const getSentimentIcon = (recommendation: string) => {
-    switch (recommendation) {
+    switch (recommendation.toUpperCase()) {
       case "BUY":
         return <TrendingUp className="h-4 w-4" />;
       case "SELL":
@@ -92,24 +92,24 @@ export default function News() {
           All News
         </Button>
         <Button
-          variant={filter === "BUY" ? "default" : "outline"}
-          onClick={() => setFilter("BUY")}
+          variant={filter === "buy" ? "default" : "outline"}
+          onClick={() => setFilter("buy")}
           className="gap-2"
         >
           <TrendingUp className="h-4 w-4" />
           Buy Signals
         </Button>
         <Button
-          variant={filter === "HOLD" ? "default" : "outline"}
-          onClick={() => setFilter("HOLD")}
+          variant={filter === "hold" ? "default" : "outline"}
+          onClick={() => setFilter("hold")}
           className="gap-2"
         >
           <Minus className="h-4 w-4" />
           Hold
         </Button>
         <Button
-          variant={filter === "SELL" ? "default" : "outline"}
-          onClick={() => setFilter("SELL")}
+          variant={filter === "sell" ? "default" : "outline"}
+          onClick={() => setFilter("sell")}
           className="gap-2"
         >
           <TrendingDown className="h-4 w-4" />
