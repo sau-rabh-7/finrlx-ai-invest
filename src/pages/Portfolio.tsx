@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { Plus, TrendingUp, TrendingDown, Info, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -25,16 +26,28 @@ interface PortfolioItem {
   analysis?: any;
 }
 
+interface Stock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  changePercent: number;
+}
+
 export default function Portfolio() {
   const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<Stock[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const [formData, setFormData] = useState({
-    ticker: "",
     shares: "",
     purchasePrice: ""
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPortfolio();
@@ -95,17 +108,67 @@ export default function Portfolio() {
     }
   };
 
-  const addPosition = async () => {
+  const fetchStocks = async (query = "") => {
     try {
-      const { data: stockData } = await supabase.functions.invoke('stock-data', {
-        body: { ticker: formData.ticker.toUpperCase() }
+      setSearchLoading(true);
+      const { data, error } = await supabase.functions.invoke('stock-search', {
+        body: { query }
       });
 
+      if (error) throw error;
+      if (data?.stocks) {
+        setSearchResults(data.stocks);
+      }
+    } catch (error) {
+      console.error('Error fetching stocks:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    
+    // Debounce search
+    const timer = setTimeout(() => {
+      fetchStocks(query);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  };
+
+  const handleStockSelect = (stock: Stock) => {
+    setSelectedStock(stock);
+    setSearchQuery("");
+    setSearchResults([]);
+  };
+
+  const addPosition = async () => {
+    if (!selectedStock) {
+      toast({
+        title: "Error",
+        description: "Please select a stock first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.shares || !formData.purchasePrice) {
+      toast({
+        title: "Error",
+        description: "Please enter shares and purchase price",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
       const { error } = await supabase
         .from('portfolio')
         .insert({
-          ticker: formData.ticker.toUpperCase(),
-          company_name: stockData?.companyName || formData.ticker.toUpperCase(),
+          ticker: selectedStock.symbol,
+          company_name: selectedStock.name,
           shares: parseFloat(formData.shares),
           purchase_price: parseFloat(formData.purchasePrice)
         });
@@ -118,7 +181,8 @@ export default function Portfolio() {
       });
 
       setDialogOpen(false);
-      setFormData({ ticker: "", shares: "", purchasePrice: "" });
+      setSelectedStock(null);
+      setFormData({ shares: "", purchasePrice: "" });
       fetchPortfolio();
     } catch (error: any) {
       toast({
@@ -215,19 +279,72 @@ export default function Portfolio() {
             Add Position
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New Position</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Ticker Symbol</Label>
-              <Input
-                placeholder="AAPL"
-                value={formData.ticker}
-                onChange={(e) => setFormData({...formData, ticker: e.target.value.toUpperCase()})}
-              />
+              <Label>Search Stock</Label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Search stocks by symbol or name..."
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  className="pl-10"
+                  disabled={!!selectedStock}
+                />
+              </div>
+              
+              {/* Search Results */}
+              {searchQuery && searchResults.length > 0 && !selectedStock && (
+                <div className="mt-2 border rounded-md max-h-48 overflow-y-auto">
+                  {searchResults.map((stock) => (
+                    <div
+                      key={stock.symbol}
+                      className="p-3 hover:bg-muted cursor-pointer border-b last:border-b-0"
+                      onClick={() => handleStockSelect(stock)}
+                    >
+                      <div className="font-semibold">{stock.symbol}</div>
+                      <div className="text-sm text-muted-foreground truncate">{stock.name}</div>
+                      {stock.price > 0 && (
+                        <div className="text-sm">${stock.price.toFixed(2)}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Selected Stock */}
+              {selectedStock && (
+                <Card className="mt-2">
+                  <CardContent className="p-3">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold">{selectedStock.symbol}</div>
+                        <div className="text-sm text-muted-foreground">{selectedStock.name}</div>
+                        {selectedStock.price > 0 && (
+                          <div className="text-sm font-medium mt-1">${selectedStock.price.toFixed(2)}</div>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedStock(null);
+                          setSearchQuery("");
+                        }}
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
+
             <div>
               <Label>Number of Shares</Label>
               <Input
@@ -248,7 +365,11 @@ export default function Portfolio() {
                 onChange={(e) => setFormData({...formData, purchasePrice: e.target.value})}
               />
             </div>
-            <Button onClick={addPosition} className="w-full">
+            <Button 
+              onClick={addPosition} 
+              className="w-full"
+              disabled={!selectedStock || !formData.shares || !formData.purchasePrice}
+            >
               Add Position
             </Button>
           </div>
@@ -289,8 +410,11 @@ export default function Portfolio() {
               <Card key={item.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle className="text-2xl">{item.ticker}</CardTitle>
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      <CardTitle className="text-2xl hover:text-primary transition-colors">{item.ticker}</CardTitle>
                       <p className="text-sm text-muted-foreground">{item.company_name}</p>
                     </div>
                     {item.analysis && (
