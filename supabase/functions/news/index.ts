@@ -5,196 +5,58 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Test function to manually check API access
-async function testNewsAPIs() {
-  console.log('=== Testing News APIs ===');
-  
-  // Test 1: Yahoo Finance API
-  try {
-    const yahooUrl = 'https://query2.finance.yahoo.com/v1/finance/search?q=market&quotesCount=0&newsCount=5&lang=en-US';
-    console.log(`Testing Yahoo API: ${yahooUrl}`);
-    
-    const response = await fetch(yahooUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      }
-    });
-    
-    console.log(`Yahoo API Status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Yahoo API Response keys:', Object.keys(data));
-      if (data.news) {
-        console.log(`Yahoo API found ${data.news.length} articles`);
-      }
-    } else {
-      console.log(`Yahoo API Error: ${response.statusText}`);
-    }
-  } catch (error) {
-    console.error('Yahoo API Test Error:', error);
-  }
-  
-  // Test 2: Alternative Yahoo endpoint
-  try {
-    const altUrl = 'https://query1.finance.yahoo.com/v1/finance/search?q=market&quotesCount=0&newsCount=5&lang=en-US';
-    console.log(`Testing Alternative Yahoo API: ${altUrl}`);
-    
-    const response = await fetch(altUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-      }
-    });
-    
-    console.log(`Alternative Yahoo API Status: ${response.status}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log('Alternative Yahoo API Response keys:', Object.keys(data));
-      if (data.news) {
-        console.log(`Alternative Yahoo API found ${data.news.length} articles`);
-      }
-    } else {
-      console.log(`Alternative Yahoo API Error: ${response.statusText}`);
-    }
-  } catch (error) {
-    console.error('Alternative Yahoo API Test Error:', error);
-  }
-  
-  console.log('=== End API Tests ===');
-}
 
-async function fetchYahooNews(query?: string) {
+async function fetchNewsAPI(query?: string) {
   try {
-    const searchQuery = query ? query : 'market';
-    const url = `https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(searchQuery)}&quotesCount=0&newsCount=${query ? 15 : 20}&lang=en-US`;
+    const NEWS_API_KEY = '8d58cd4e44374bdb8c499c363d073668';
+    const searchQuery = query || 'stock market';
+    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=${NEWS_API_KEY}&language=en&sortBy=publishedAt&pageSize=20`;
     
-    console.log(`Fetching from URL: ${url}`);
+    console.log(`Fetching from NewsAPI: ${searchQuery}`);
     
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-      }
-    });
+    const response = await fetch(url);
 
-    console.log(`Response status: ${response.status}`);
+    console.log(`NewsAPI Response status: ${response.status}`);
     
     if (!response.ok) {
-      console.error(`Yahoo API error: ${response.status} ${response.statusText}`);
-      throw new Error(`Yahoo News API error: ${response.status}`);
+      console.error(`NewsAPI error: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`NewsAPI error response:`, errorText);
+      throw new Error(`NewsAPI error: ${response.status}`);
     }
 
     const data = await response.json();
     console.log(`Received data structure:`, Object.keys(data));
     
-    if (!data.news || !Array.isArray(data.news)) {
-      console.log('No news array found in response');
+    if (!data.articles || !Array.isArray(data.articles)) {
+      console.log('No articles array found in response');
       return [];
     }
 
-    console.log(`Found ${data.news.length} news articles`);
+    console.log(`Found ${data.articles.length} news articles from NewsAPI`);
 
     // Format the news data
-    const formattedNews = data.news.map((article: any) => ({
-      id: article.uuid || Math.random().toString(),
-      title: article.title || 'No title',
-      summary: article.summary || 'No summary available.',
-      source: article.publisher || 'Unknown Source',
-      url: article.link || '#',
-      publishedAt: article.providerPublishTime ? 
-        new Date(article.providerPublishTime * 1000).toISOString() : 
-        new Date().toISOString(),
-    }));
+    const formattedNews = data.articles
+      .filter((article: any) => article.title && article.title !== '[Removed]')
+      .map((article: any) => ({
+        id: article.url || Math.random().toString(),
+        title: article.title || 'No title',
+        summary: article.description || article.content || 'No summary available.',
+        source: article.source?.name || 'Unknown Source',
+        url: article.url || '#',
+        publishedAt: article.publishedAt || new Date().toISOString(),
+      }));
 
     console.log(`Formatted ${formattedNews.length} articles`);
     return formattedNews;
 
   } catch (error) {
-    console.error('Error fetching from Yahoo News:', error);
-    console.log('Trying alternative news source...');
-    return await fetchAlternativeNews(query);
-  }
-}
-
-async function fetchAlternativeNews(query?: string) {
-  try {
-    // Try using NewsAPI as an alternative
-    const NEWS_API_KEY = Deno.env.get('NEWS_API_KEY');
-    
-    if (NEWS_API_KEY) {
-      console.log('Trying NewsAPI as alternative source');
-      const searchQuery = query ? query : 'finance';
-      const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=${NEWS_API_KEY}&language=en&sortBy=publishedAt&pageSize=20`;
-      
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.articles && Array.isArray(data.articles)) {
-          console.log(`NewsAPI found ${data.articles.length} articles`);
-          
-          return data.articles.map((article: any) => ({
-            id: article.url || Math.random().toString(),
-            title: article.title || 'No title',
-            summary: article.description || article.content || 'No summary available.',
-            source: article.source?.name || 'NewsAPI',
-            url: article.url || '#',
-            publishedAt: article.publishedAt || new Date().toISOString(),
-          }));
-        }
-      }
-    }
-    
-    // Try using a different Yahoo Finance endpoint
-    const searchQuery = query ? query : 'stock market';
-    const url = `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(searchQuery)}&quotesCount=0&newsCount=20&lang=en-US`;
-    
-    console.log(`Trying alternative Yahoo URL: ${url}`);
-    
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Accept': 'application/json',
-        'Referer': 'https://finance.yahoo.com/'
-      }
-    });
-
-    if (!response.ok) {
-      throw new Error(`Alternative API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    if (data.news && Array.isArray(data.news)) {
-      console.log(`Alternative Yahoo source found ${data.news.length} articles`);
-      
-      return data.news.map((article: any) => ({
-        id: article.uuid || Math.random().toString(),
-        title: article.title || 'No title',
-        summary: article.summary || 'No summary available.',
-        source: article.publisher || 'Yahoo Finance',
-        url: article.link || '#',
-        publishedAt: article.providerPublishTime ? 
-          new Date(article.providerPublishTime * 1000).toISOString() : 
-          new Date().toISOString(),
-      }));
-    }
-    
-    throw new Error('No news found in alternative source');
-    
-  } catch (error) {
-    console.error('Error fetching from alternative source:', error);
-    console.log('Falling back to mock data');
+    console.error('Error fetching from NewsAPI:', error);
+    console.log('Falling back to mock data...');
     return getMockNewsData(query);
   }
 }
+
 
 function getMockNewsData(query?: string) {
   console.log(`Generating mock data for query: ${query || 'general market'}`);
@@ -293,18 +155,10 @@ serve(async (req) => {
       console.log('No request body, fetching general news');
     }
 
-    // Run API tests if requested
-    if (testMode) {
-      await testNewsAPIs();
-      return new Response(
-        JSON.stringify({ message: 'API tests completed, check logs' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
 
     console.log(`Fetching news for query: ${query || 'general market'}`);
 
-    const articles = await fetchYahooNews(query);
+    const articles = await fetchNewsAPI(query);
     console.log(`Returning ${articles.length} articles`);
 
     return new Response(

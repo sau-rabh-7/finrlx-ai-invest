@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { StockSelector } from "@/components/StockSelector";
-import { PriceChart } from "@/components/PriceChart";
+import PriceChart from "@/components/PriceChart";
 import { AIAnalysis } from "@/components/AIAnalysis";
 import { PortfolioOptimizer } from "@/components/PortfolioOptimizer";
 
@@ -19,7 +19,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
-            <PriceChart ticker={selectedStock} />
+            <PriceChart symbol={selectedStock} />
           </div>
           
           <div className="space-y-6">
