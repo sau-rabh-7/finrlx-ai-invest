@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import PriceChart from "@/components/PriceChart";
 
 interface StockDetail {
   symbol: string;
@@ -156,16 +157,7 @@ export default function StockDetail() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Price Chart</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-center py-8">
-                Historical price chart will be displayed here
-              </p>
-            </CardContent>
-          </Card>
+          <PriceChart symbol={stock.symbol} />
         </div>
 
         {/* AI Analysis Sidebar */}
