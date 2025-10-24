@@ -10,6 +10,7 @@ import StockDetail from "./pages/StockDetail";
 import News from "./pages/News";
 import Watchlist from "./pages/Watchlist";
 import Portfolio from "./pages/Portfolio";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/news" element={<News />} />
           <Route path="/watchlist" element={<Watchlist />} />
           <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/auth" element={<Auth />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

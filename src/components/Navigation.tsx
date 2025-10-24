@@ -1,9 +1,36 @@
-import { Link, useLocation } from "react-router-dom";
-import { Home, Newspaper, Star, Briefcase, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, Newspaper, Star, Briefcase, TrendingUp, LogOut, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Session } from "@supabase/supabase-js";
 
 export const Navigation = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const [session, setSession] = useState<Session | null>(null);
+
+  useEffect(() => {
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+      }
+    );
+
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const navItems = [
     { path: "/", label: "Market", icon: Home },
@@ -45,6 +72,33 @@ export const Navigation = () => {
                 </Link>
               );
             })}
+            
+            {session ? (
+              <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground px-3">
+                  <User className="h-4 w-4" />
+                  <span className="hidden md:inline">{session.user.email}</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden md:inline">Sign Out</span>
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => navigate("/auth")}
+                className="ml-4"
+              >
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </div>

@@ -50,8 +50,16 @@ export default function Portfolio() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPortfolio();
-  }, []);
+    const checkAuthAndFetch = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate("/auth");
+        return;
+      }
+      fetchPortfolio();
+    };
+    checkAuthAndFetch();
+  }, [navigate]);
 
   const fetchPortfolio = async () => {
     try {
