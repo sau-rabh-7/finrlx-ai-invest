@@ -164,13 +164,26 @@ export default function Portfolio() {
     }
 
     try {
+      // Get the current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Authentication Required",
+          description: "Please sign in to add positions to your portfolio",
+          variant: "destructive"
+        });
+        return;
+      }
+
       const { error } = await supabase
         .from('portfolio')
         .insert({
           ticker: selectedStock.symbol,
           company_name: selectedStock.name,
           shares: parseFloat(formData.shares),
-          purchase_price: parseFloat(formData.purchasePrice)
+          purchase_price: parseFloat(formData.purchasePrice),
+          user_id: user.id
         });
 
       if (error) throw error;
