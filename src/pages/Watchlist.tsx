@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface WatchlistItem {
   id: string;
@@ -265,78 +266,105 @@ export default function Watchlist() {
         </DialogContent>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? (
-          <>
-            {[1, 2, 3].map(i => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded w-24"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-8 bg-muted rounded w-32 mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-20"></div>
-                </CardContent>
-              </Card>
-            ))}
-          </>
-        ) : watchlist.length === 0 ? (
-          <Card className="col-span-full">
-            <CardContent className="py-12 text-center">
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Watchlist</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-16 bg-muted rounded animate-pulse"></div>
+              ))}
+            </div>
+          ) : watchlist.length === 0 ? (
+            <div className="py-12 text-center">
               <p className="text-muted-foreground">
                 Your watchlist is empty. Add some stocks to get started!
               </p>
-            </CardContent>
-          </Card>
-        ) : (
-          watchlist.map((item) => (
-            <Card key={item.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div 
-                    className="cursor-pointer flex-1"
-                    onClick={() => navigate(`/stocks/${item.ticker}`)}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Symbol</TableHead>
+                  <TableHead>Company</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Change</TableHead>
+                  <TableHead className="text-right">Change %</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {watchlist.map((item) => (
+                  <TableRow 
+                    key={item.id}
+                    className="cursor-pointer hover:bg-muted/50"
                   >
-                    <CardTitle className="text-2xl hover:text-primary transition-colors">{item.ticker}</CardTitle>
-                    <p className="text-sm text-muted-foreground">{item.company_name}</p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeFromWatchlist(item.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {item.currentPrice ? (
-                  <>
-                    <div className="text-3xl font-bold mb-1">
-                      ${item.currentPrice.toFixed(2)}
-                    </div>
-                    <div className={`flex items-center text-sm ${
-                      item.changePercent && item.changePercent >= 0 
-                        ? 'text-[hsl(var(--bullish))]' 
-                        : 'text-[hsl(var(--bearish))]'
-                    }`}>
-                      {item.changePercent && item.changePercent >= 0 ? (
-                        <TrendingUp className="h-4 w-4 mr-1" />
-                      ) : (
-                        <TrendingDown className="h-4 w-4 mr-1" />
-                      )}
-                      {item.changePercent && item.changePercent >= 0 ? '+' : ''}
-                      {item.changePercent?.toFixed(2)}%
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-muted-foreground">Loading price...</p>
-                )}
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+                    <TableCell 
+                      className="font-bold"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      {item.ticker}
+                    </TableCell>
+                    <TableCell 
+                      className="text-muted-foreground"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      {item.company_name}
+                    </TableCell>
+                    <TableCell 
+                      className="text-right font-semibold"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      {item.currentPrice ? `$${item.currentPrice.toFixed(2)}` : '-'}
+                    </TableCell>
+                    <TableCell 
+                      className="text-right"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      {item.change ? (
+                        <span className={item.change >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'}>
+                          {item.change >= 0 ? '+' : ''}{item.change.toFixed(2)}
+                        </span>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell 
+                      className="text-right"
+                      onClick={() => navigate(`/stocks/${item.ticker}`)}
+                    >
+                      {item.changePercent ? (
+                        <div className={`flex items-center justify-end gap-1 ${
+                          item.changePercent >= 0 
+                            ? 'text-[hsl(var(--bullish))]' 
+                            : 'text-[hsl(var(--bearish))]'
+                        }`}>
+                          {item.changePercent >= 0 ? (
+                            <TrendingUp className="h-4 w-4" />
+                          ) : (
+                            <TrendingDown className="h-4 w-4" />
+                          )}
+                          {item.changePercent >= 0 ? '+' : ''}
+                          {item.changePercent.toFixed(2)}%
+                        </div>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeFromWatchlist(item.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
