@@ -67,7 +67,7 @@ export default function Watchlist() {
       });
 
       if (error) throw error;
-      setSearchResults(data || []);
+      setSearchResults(data?.stocks || []);
     } catch (error) {
       console.error('Error fetching stocks:', error);
     } finally {
