@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { sentimentApi } from "@/services/sentimentApi";
-import { SentimentData } from "@/components/SentimentAnalysisOld";
+import { SentimentData } from "@/components/SentimentAnalysis";
 
 interface UseSentimentAnalysisOptions {
   onSuccess?: (data: SentimentData) => void;

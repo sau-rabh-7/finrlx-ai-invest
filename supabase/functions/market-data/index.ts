@@ -75,11 +75,50 @@ async function getTopMovers(gainers: boolean) {
   };
 }
 
+async function getTrendingStocks() {
+  // Popular trending stocks
+  const symbols = ['TSLA', 'NVDA', 'AMD', 'PLTR', 'SOFI', 'RIVN', 'LCID', 'NIO', 'COIN', 'HOOD', 'RBLX', 'SHOP'];
+  
+  const results = await Promise.all(symbols.map(symbol => fetchYahooFinanceData(symbol)));
+  const validResults = results.filter(r => r !== null);
+  
+  // Sort by absolute change percent (most volatile)
+  validResults.sort((a, b) => Math.abs(b!.changePercent) - Math.abs(a!.changePercent));
+  
+  return {
+    stocks: validResults.slice(0, 10).map(r => ({
+      symbol: r!.symbol,
+      lastPrice: parseFloat(r!.price.toFixed(2)),
+      pChange: parseFloat(r!.changePercent.toFixed(2)),
+      change: parseFloat(r!.change.toFixed(2))
+    }))
+  };
+}
+
+async function getMostActiveStocks() {
+  // High volume stocks
+  const symbols = ['AAPL', 'TSLA', 'NVDA', 'AMD', 'MSFT', 'AMZN', 'META', 'GOOGL', 'SPY', 'QQQ', 'NFLX', 'BABA'];
+  
+  const results = await Promise.all(symbols.map(symbol => fetchYahooFinanceData(symbol)));
+  const validResults = results.filter(r => r !== null);
+  
+  return {
+    stocks: validResults.slice(0, 10).map(r => ({
+      symbol: r!.symbol,
+      lastPrice: parseFloat(r!.price.toFixed(2)),
+      pChange: parseFloat(r!.changePercent.toFixed(2)),
+      change: parseFloat(r!.change.toFixed(2))
+    }))
+  };
+}
+
 function getMarketSummary() {
   return {
     totalTurnover: 450000000000 + Math.random() * 50000000000,
     totalShares: 8500000000 + Math.random() * 1000000000,
     totalTransactions: 15000000 + Math.random() * 2000000,
+    totalVolume: 12000000000 + Math.random() * 3000000000,
+    totalMarketCap: 45000000000000 + Math.random() * 5000000000000,
     advances: 1800 + Math.floor(Math.random() * 400),
     declines: 1200 + Math.floor(Math.random() * 400),
     unchanged: 200 + Math.floor(Math.random() * 100)
@@ -103,6 +142,10 @@ serve(async (req) => {
       data = await getTopMovers(true);
     } else if (type === 'losers') {
       data = await getTopMovers(false);
+    } else if (type === 'trending') {
+      data = await getTrendingStocks();
+    } else if (type === 'most-active') {
+      data = await getMostActiveStocks();
     } else if (type === 'market-summary') {
       data = getMarketSummary();
     } else {
