@@ -57,6 +57,9 @@ serve(async (req) => {
       volume: quotes.volume[i]
     })).filter((d: any) => d.close !== null);
 
+    // Extract closing prices for LSTM predictions
+    const closingPrices = historicalData.map((d: any) => d.close);
+
     // PLACEHOLDER: This is where you would integrate your FinBERT model
     // The model should analyze the stock data and news sentiment to return:
     // - recommendation: 'buy' | 'sell' | 'hold'
@@ -90,8 +93,11 @@ serve(async (req) => {
       marketCap: meta.marketCap || 0,
       pe: 0,
       historicalData,
+      closingPrices, // For LSTM predictions
       aiAnalysis // PLACEHOLDER for your FinBERT model
     };
+
+    console.log(`✅ Fetched ${closingPrices.length} days of data for ${symbol}`);
 
     return new Response(
       JSON.stringify(stockDetail),
