@@ -48,15 +48,15 @@ backend/.venv/
 dmypy.json
 
 # ML Models & Data
-*.h5
-*.pkl
-*.joblib
-*.model
-*.weights
-backend/models/*.h5
-backend/models/*.pkl
-backend/scaler*.pkl
-backend/lstm_model*.h5
+# *.h5
+# *.pkl
+# *.joblib
+# *.model
+# *.weights
+# backend/models/*.h5
+# backend/models/*.pkl
+# backend/scaler*.pkl
+# backend/lstm_model*.h5
 
 # IDE
 .vscode/*
