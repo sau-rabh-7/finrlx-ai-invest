@@ -264,7 +264,7 @@ export default function News() {
             disabled={searchedArticles.length === 0 || searchedArticles.some(a => a.sentimentLoading)}
             className="gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
           >
-            <Loader2 className={`h-4 w-4 ${searchedArticles.some(a => a.sentimentLoading) ? 'animate-spin' : ''}`} />
+            {/* <Loader2 className={`h-4 w-4 ${searchedArticles.some(a => a.sentimentLoading) ? 'animate-spin' : ''}`} /> */}
             Analyze All ({searchedArticles.length})
           </Button>
           
@@ -366,7 +366,7 @@ export default function News() {
                             size="sm"
                             className="gap-2"
                           >
-                            <Loader2 className="h-4 w-4" />
+                            {/* <Loader2 className="h-4 w-4" /> */}
                             Analyze Sentiment
                           </Button>
                         </div>

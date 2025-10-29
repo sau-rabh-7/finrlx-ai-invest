@@ -19,7 +19,7 @@ export const StockSelector = ({ value, onChange }: StockSelectorProps) => {
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-2">
         <TrendingUp className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-bold">FinRLX</h1>
+        <h1 className="text-2xl font-bold">TradeX</h1>
       </div>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-[280px] border-border bg-card">

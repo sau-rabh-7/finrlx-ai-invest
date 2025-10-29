@@ -1,5 +1,5 @@
 @echo off
-echo Starting FinBERT Sentiment Analysis Backend...
+echo Starting TradeX Portfolio Optimization Backend...
 echo.
 
 REM Check if virtual environment exists
@@ -7,12 +7,15 @@ if not exist "venv" (
     echo Virtual environment not found. Creating one...
     python -m venv venv
     echo.
+    
+    echo Installing Python dependencies...
+    call venv\Scripts\activate
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+    echo.
+) else (
+    call venv\Scripts\activate
 )
-
-REM Activate virtual environment
-echo Activating virtual environment...
-call venv\Scripts\activate
-echo.
 
 REM Check if requirements are installed
 echo Checking dependencies...

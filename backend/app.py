@@ -1,9 +1,10 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, make_response
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 from sentiment_analyzer import FinBERTSentimentAnalyzer
 from price_predictor import get_predictor
+from optimization_api import optimization_bp
 import threading
 
 # Load environment variables
@@ -11,7 +12,15 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)  # Enable CORS for all routes
+
+# Configure CORS
+CORS(app, resources={
+    r"/*": {
+        "origins": ["http://localhost:3000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 
 # Initialize FinBERT analyzer (singleton pattern with thread lock)
 analyzer = None
@@ -29,13 +38,30 @@ def get_analyzer():
                 print("FinBERT model loaded successfully!")
     return analyzer
 
+# Register blueprints
+app.register_blueprint(optimization_bp, url_prefix='/api/portfolio')
+
+# Add CORS headers
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 @app.route('/health', methods=['GET'])
 def health_check():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'service': 'FinBERT Sentiment Analysis API',
-        'version': '1.0.0'
+        'service': 'TradeX Portfolio API',
+        'version': '1.0.0',
+        'endpoints': [
+            '/api/portfolio/optimize (POST)',
+            '/api/sentiment/analyze (POST)',
+            '/api/sentiment/batch (POST)',
+            '/api/price/predict (POST)'
+        ]
     })
 
 @app.route('/api/sentiment/analyze', methods=['POST'])
@@ -336,6 +362,7 @@ def predict_price():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     debug = os.environ.get('FLASK_ENV', 'production') == 'development'
+    # app.run(debug=True) # debug=False for production
     
     print(f"Starting FinBERT Sentiment Analysis API on port {port}")
     print(f"Debug mode: {debug}")

@@ -8,51 +8,86 @@ const corsHeaders = {
 
 async function fetchNewsAPI(query?: string) {
   try {
-    const NEWS_API_KEY = '8d58cd4e44374bdb8c499c363d073668';
-    const searchQuery = query || 'stock market';
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(searchQuery)}&apiKey=${NEWS_API_KEY}&language=en&sortBy=publishedAt&pageSize=20`;
-    
-    console.log(`Fetching from NewsAPI: ${searchQuery}`);
-    
+    // IMPORTANT: Replace with your actual NewsAPI key securely (e.g., via environment variables)
+    // Using a hardcoded key like this is NOT recommended for production.
+    const NEWS_API_KEY = '8d58cd4e44374bdb8c499c363d073668'; // Replace with your key
+    let url = '';
+    let logQuery = '';
+
+    if (query) {
+      // --- Improved Logic: Use qInTitle for specific company/ticker queries ---
+      // Basic assumption: query could be name or ticker. Search for it in the title.
+      // For more accuracy, you might want a mapping from name to ticker.
+      // Using quotes helps find exact matches but might be too restrictive.
+      // Let's search for the term directly in the title.
+      const titleQuery = query; // Use the provided query directly for title search
+      logQuery = `qInTitle=${titleQuery}`;
+      url = `https://newsapi.org/v2/everything?qInTitle=${encodeURIComponent(titleQuery)}&apiKey=${NEWS_API_KEY}&language=en&sortBy=publishedAt&pageSize=20&domains=wsj.com,reuters.com,bloomberg.com,cnbc.com,marketwatch.com,finance.yahoo.com`; // Added relevant financial domains
+
+    } else {
+      // --- Fallback for general market news ---
+      logQuery = 'q=stock market investment finance'; // Broader default query
+      url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(logQuery)}&apiKey=${NEWS_API_KEY}&language=en&sortBy=relevancy&pageSize=20&domains=wsj.com,reuters.com,bloomberg.com,cnbc.com,marketwatch.com,finance.yahoo.com`; // Sort by relevancy for general news
+    }
+
+    console.log(`Fetching from NewsAPI with: ${logQuery}`);
+    console.log(`Request URL: ${url}`); // Log the exact URL
+
     const response = await fetch(url);
 
     console.log(`NewsAPI Response status: ${response.status}`);
-    
+
     if (!response.ok) {
-      console.error(`NewsAPI error: ${response.status} ${response.statusText}`);
+      // Log more detailed error information
       const errorText = await response.text();
-      console.error(`NewsAPI error response:`, errorText);
-      throw new Error(`NewsAPI error: ${response.status}`);
+      console.error(`NewsAPI error: ${response.status} ${response.statusText}`);
+      console.error(`NewsAPI error response body:`, errorText);
+      // Attempt to parse JSON error if possible
+      try {
+        const errorJson = JSON.parse(errorText);
+        console.error("NewsAPI JSON error:", errorJson);
+        throw new Error(`NewsAPI error: ${errorJson.code} - ${errorJson.message}`);
+      } catch {
+         throw new Error(`NewsAPI error: ${response.status} ${response.statusText}`);
+      }
     }
 
     const data = await response.json();
-    console.log(`Received data structure:`, Object.keys(data));
-    
-    if (!data.articles || !Array.isArray(data.articles)) {
-      console.log('No articles array found in response');
-      return [];
+
+    if (data.status !== 'ok') {
+        console.error('NewsAPI response status is not ok:', data);
+        throw new Error(data.message || 'NewsAPI returned an error status.');
     }
 
-    console.log(`Found ${data.articles.length} news articles from NewsAPI`);
+    if (!data.articles || !Array.isArray(data.articles)) {
+      console.log('No "articles" array found or is not an array in the response.');
+      return []; // Return empty array if no articles
+    }
 
-    // Format the news data
+    console.log(`Found ${data.articles.length} news articles from NewsAPI for query "${query || 'general market'}"`);
+
+    // Format the news data - Keep only necessary fields and filter out removed titles
     const formattedNews = data.articles
-      .filter((article: any) => article.title && article.title !== '[Removed]')
+      .filter((article: any) => article && article.title && article.title !== '[Removed]' && article.url) // Ensure article, title, and url exist
       .map((article: any) => ({
-        id: article.url || Math.random().toString(),
-        title: article.title || 'No title',
-        summary: article.description || article.content || 'No summary available.',
+        id: article.url, // Use URL as a more stable ID
+        title: article.title,
+        // Use description, fallback to content, trim length
+        summary: (article.description || article.content || '').substring(0, 200) + ( (article.description || article.content || '').length > 200 ? '...' : ''),
         source: article.source?.name || 'Unknown Source',
-        url: article.url || '#',
+        url: article.url,
         publishedAt: article.publishedAt || new Date().toISOString(),
       }));
 
-    console.log(`Formatted ${formattedNews.length} articles`);
+    console.log(`Formatted ${formattedNews.length} valid articles.`);
     return formattedNews;
 
   } catch (error) {
-    console.error('Error fetching from NewsAPI:', error);
-    console.log('Falling back to mock data...');
+    console.error('Error fetching or processing NewsAPI data:', error);
+    // Don't fall back to mock data on API errors in production usually,
+    // but keep it here as per original logic for now.
+    console.log('Falling back to mock data due to error...');
+    // Pass the original query to mock data function if needed
     return getMockNewsData(query);
   }
 }

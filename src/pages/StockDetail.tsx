@@ -148,34 +148,59 @@ export default function StockDetail() {
   };
 
   const fetchCompanyNews = async () => {
-    if (!stock) return;
-    
-    try {
-      setNewsLoading(true);
-      const { data, error } = await supabase.functions.invoke('news', {
-        body: { query: stock.companyName }
-      });
+  // Ensure stock data (including the symbol) is available
+  if (!stock || !stock.symbol) {
+    console.log("Stock data or symbol not available for news fetch.");
+    return;
+  }
 
-      if (error) throw error;
-      
-      if (data?.articles) {
-        const articlesWithSentiment: NewsWithSentiment[] = data.articles.slice(0, 10).map((article: NewsArticle) => ({
+  try {
+    setNewsLoading(true);
+    // *** CHANGE: Pass stock.symbol as the 'ticker' parameter ***
+    const { data, error } = await supabase.functions.invoke('news', {
+      body: { ticker: stock.symbol } // Use 'ticker' to match the Supabase function expectation
+    });
+
+    if (error) {
+        // Log the specific error from the function invoke
+        console.error('Supabase function invoke error:', error);
+        throw new Error(error.message || 'Function invocation failed');
+    }
+
+    if (data?.articles && Array.isArray(data.articles)) {
+      // Map articles, keep placeholder for sentiment
+      const articlesWithSentiment: NewsWithSentiment[] = data.articles
+        // Ensure basic article structure before mapping
+        .filter((article: any) => article && article.title && article.url)
+        .slice(0, 10) // Limit to 10 articles client-side
+        .map((article: NewsArticle) => ({
           ...article,
-          sentiment: null,
+          sentiment: null, // Placeholder for future FinBERT integration
           sentimentLoading: false
         }));
-        
-        setNews(articlesWithSentiment);
-        setShowNews(true);
-        toast.success(`Found ${articlesWithSentiment.length} articles`);
-      }
-    } catch (error) {
-      console.error('Error fetching news:', error);
-      toast.error("Failed to fetch news");
-    } finally {
-      setNewsLoading(false);
+
+      setNews(articlesWithSentiment);
+      setShowNews(articlesWithSentiment.length > 0); // Only show if there are articles
+
+      // Optional: Remove or make this toast conditional if it's too noisy
+      // toast.success(`Found ${articlesWithSentiment.length} relevant articles for ${stock.symbol}`);
+
+    } else {
+        console.log("No articles array received from the news function.");
+        setNews([]); // Clear news if none found
+        setShowNews(false);
+        // Optional: Inform user if no news found specifically
+        // toast.info(`No recent news found for ${stock.symbol}`);
     }
-  };
+  } catch (error) {
+    console.error('Error fetching company news:', error);
+    toast.error(`Failed to fetch news for ${stock.symbol}`);
+    setNews([]); // Clear news on error
+    setShowNews(false);
+  } finally {
+    setNewsLoading(false);
+  }
+};
 
   const analyzeSingleNews = async (index: number) => {
     const article = news[index];
@@ -574,7 +599,7 @@ export default function StockDetail() {
                 disabled={analyzingAll || news.every(n => n.sentiment !== null)}
                 className="w-full gap-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
               >
-                <Loader2 className={`h-4 w-4 ${analyzingAll ? 'animate-spin' : ''}`} />
+                {/* <Loader2 className={`h-4 w-4 ${analyzingAll ? 'animate-spin' : ''}`} /> */}
                 {news.every(n => n.sentiment !== null) ? 'All Analyzed' : `Analyze All (${news.length})`}
               </Button>
 
@@ -619,7 +644,7 @@ export default function StockDetail() {
                           onClick={() => analyzeSingleNews(index)}
                           className="w-full gap-2"
                         >
-                          <Loader2 className="h-3 w-3" />
+                          {/* <Loader2 className="h-3 w-3" /> */}
                           Analyze Sentiment
                         </Button>
                       )}

@@ -141,10 +141,10 @@ export default function Auth() {
           <div className="flex items-center justify-center gap-2 mb-4">
             <TrendingUp className="h-8 w-8 text-primary" />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              FinRLX
+              TradeX
             </h1>
           </div>
-          <CardTitle>Welcome to FinRLX</CardTitle>
+          <CardTitle>Welcome to TradeX</CardTitle>
           <CardDescription>
             AI-powered trading platform with real-time market insights
           </CardDescription>
