@@ -70,6 +70,7 @@ export default function Market() {
   const [chartData, setChartData] = useState<ChartData[]>([]);
   const [selectedTimeRange, setSelectedTimeRange] = useState<string>("1m");
   const [chartLoading, setChartLoading] = useState(false);
+  const [periodChange, setPeriodChange] = useState<{ change: number; changePercent: number } | null>(null);
 
   useEffect(() => {
     fetchMarketData();
@@ -166,6 +167,19 @@ export default function Market() {
            data.push({ time: 'Now', value: index.value, change: index.changePercent });
        }
 
+      // Calculate period change (from first to last point)
+      if (data.length > 1) {
+        const firstValue = data[0].value;
+        const lastValue = data[data.length - 1].value;
+        const absoluteChange = lastValue - firstValue;
+        const percentChange = (absoluteChange / firstValue) * 100;
+        setPeriodChange({ change: absoluteChange, changePercent: percentChange });
+      } else if (data.length === 1) {
+        // If only one data point, use the index's current change
+        setPeriodChange({ change: index.change, changePercent: index.changePercent });
+      } else {
+        setPeriodChange(null);
+      }
 
       setChartData(data);
     } catch (error) {
@@ -356,11 +370,11 @@ export default function Market() {
                           })}
                         </div>
                         <div className={`flex items-center text-sm ${
-                          selectedIndexData.change >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'
+                          (periodChange?.change ?? 0) >= 0 ? 'text-[hsl(var(--bullish))]' : 'text-[hsl(var(--bearish))]'
                         }`}>
-                          {selectedIndexData.change >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
-                          {selectedIndexData.change >= 0 ? '+' : ''}{selectedIndexData.change.toFixed(2)}
-                          ({selectedIndexData.change >= 0 ? '+' : ''}{selectedIndexData.changePercent.toFixed(2)}%)
+                          {(periodChange?.change ?? 0) >= 0 ? <TrendingUp className="h-4 w-4 mr-1" /> : <TrendingDown className="h-4 w-4 mr-1" />}
+                          {(periodChange?.change ?? 0) >= 0 ? '+' : ''}{(periodChange?.change ?? 0).toFixed(2)}
+                          ({(periodChange?.changePercent ?? 0) >= 0 ? '+' : ''}{(periodChange?.changePercent ?? 0).toFixed(2)}%)
                         </div>
                       </div>
                     ) : (
@@ -413,7 +427,7 @@ export default function Market() {
                 <div className="h-[350px] md:h-[400px]"> {/* Adjusted height */}
                   <ResponsiveContainer width="100%" height="100%">
                     {(() => {
-                      const isPositive = selectedIndexData ? selectedIndexData.change >= 0 : true;
+                      const isPositive = periodChange ? periodChange.change >= 0 : true;
                       const lineColor = isPositive ? "hsl(var(--bullish))" : "hsl(var(--bearish))";
                       // Use the same color for the gradient, but define opacities
                       const gradientId = `chartGradient-${selectedIndexSymbol}-${isPositive ? 'pos' : 'neg'}`;

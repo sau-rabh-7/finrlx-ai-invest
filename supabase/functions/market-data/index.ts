@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { TOP_100_TICKERS } from "./sp500-tickers.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -51,19 +52,34 @@ async function getMarketOverview() {
 }
 
 async function getTopMovers(gainers: boolean) {
-  // Using popular US stocks as examples
-  const symbols = gainers 
-    ? ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA', 'TSLA', 'META', 'NFLX', 'AMD', 'INTC']
-    : ['WMT', 'CVX', 'XOM', 'JNJ', 'PG', 'KO', 'PEP', 'MRK', 'ABBV', 'LLY'];
+  console.log(`Fetching ${gainers ? 'gainers' : 'losers'} from ${TOP_100_TICKERS.length} stocks...`);
   
-  const results = await Promise.all(symbols.map(symbol => fetchYahooFinanceData(symbol)));
-  const validResults = results.filter(r => r !== null);
+  // Fetch all stocks in batches to avoid overwhelming the API
+  const batchSize = 20;
+  const allResults = [];
   
-  // Sort by change percent
+  for (let i = 0; i < TOP_100_TICKERS.length; i += batchSize) {
+    const batch = TOP_100_TICKERS.slice(i, i + batchSize);
+    const batchResults = await Promise.all(
+      batch.map(symbol => fetchYahooFinanceData(symbol))
+    );
+    allResults.push(...batchResults);
+    
+    // Small delay between batches to be respectful to the API
+    if (i + batchSize < TOP_100_TICKERS.length) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+  }
+  
+  // Filter out null results and sort by change percent
+  const validResults = allResults.filter(r => r !== null);
+  
   validResults.sort((a, b) => gainers 
     ? (b!.changePercent - a!.changePercent)
     : (a!.changePercent - b!.changePercent)
   );
+  
+  console.log(`Found ${validResults.length} valid stocks. Top ${gainers ? 'gainer' : 'loser'}: ${validResults[0]?.symbol} (${validResults[0]?.changePercent.toFixed(2)}%)`);
   
   return {
     stocks: validResults.slice(0, 10).map(r => ({
@@ -76,14 +92,18 @@ async function getTopMovers(gainers: boolean) {
 }
 
 async function getTrendingStocks() {
-  // Popular trending stocks
-  const symbols = ['TSLA', 'NVDA', 'AMD', 'PLTR', 'SOFI', 'RIVN', 'LCID', 'NIO', 'COIN', 'HOOD', 'RBLX', 'SHOP'];
+  console.log('Fetching trending stocks (most volatile)...');
   
-  const results = await Promise.all(symbols.map(symbol => fetchYahooFinanceData(symbol)));
+  // Use a subset of volatile stocks for trending
+  const volatileStocks = TOP_100_TICKERS.slice(0, 50);
+  
+  const results = await Promise.all(volatileStocks.map(symbol => fetchYahooFinanceData(symbol)));
   const validResults = results.filter(r => r !== null);
   
   // Sort by absolute change percent (most volatile)
   validResults.sort((a, b) => Math.abs(b!.changePercent) - Math.abs(a!.changePercent));
+  
+  console.log(`Found ${validResults.length} trending stocks. Most volatile: ${validResults[0]?.symbol} (${validResults[0]?.changePercent.toFixed(2)}%)`);
   
   return {
     stocks: validResults.slice(0, 10).map(r => ({
@@ -96,11 +116,18 @@ async function getTrendingStocks() {
 }
 
 async function getMostActiveStocks() {
-  // High volume stocks
-  const symbols = ['AAPL', 'TSLA', 'NVDA', 'AMD', 'MSFT', 'AMZN', 'META', 'GOOGL', 'SPY', 'QQQ', 'NFLX', 'BABA'];
+  console.log('Fetching most active stocks...');
   
-  const results = await Promise.all(symbols.map(symbol => fetchYahooFinanceData(symbol)));
+  // Use mega-cap stocks which typically have highest volume
+  const activeStocks = TOP_100_TICKERS.slice(0, 30);
+  
+  const results = await Promise.all(activeStocks.map(symbol => fetchYahooFinanceData(symbol)));
   const validResults = results.filter(r => r !== null);
+  
+  // Sort by absolute change to show most active movers
+  validResults.sort((a, b) => Math.abs(b!.changePercent) - Math.abs(a!.changePercent));
+  
+  console.log(`Found ${validResults.length} active stocks`);
   
   return {
     stocks: validResults.slice(0, 10).map(r => ({
