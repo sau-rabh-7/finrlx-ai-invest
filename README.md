@@ -6,7 +6,7 @@
 [![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)](https://reactjs.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-181818?style=flat&logo=supabase&logoColor=white)](https://supabase.com/)
 
-FinRLx AI Invest is an intelligent investment platform that leverages machine learning and modern web technologies to provide data-driven investment insights and portfolio optimization.
+TradeX AI Invest is an intelligent investment platform that leverages machine learning and modern web technologies to provide data-driven investment insights and portfolio optimization.
 
 ## 🚀 Features
 
